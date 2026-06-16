@@ -4,7 +4,29 @@ from pydantic import BaseModel
 from groq import Groq
 from dotenv import load_dotenv
 import os
+from flight_service import get_flights
+AIRPORT_CODES = {
+    "Coimbatore": "CJB",
+    "Goa": "GOI",
+    "Chennai": "MAA",
+    "Bangalore": "BLR",
+    "Mumbai": "BOM",
+    "Delhi": "DEL",
+    "Hyderabad": "HYD",
+    "Kochi": "COK",
+    "Pune": "PNQ",
+    "Kolkata": "CCU",
+    "Ahmedabad": "AMD"
+}
+def get_best_flight(flights):
 
+    if not flights:
+        return None
+
+    return min(
+        flights,
+        key=lambda x: x["price"]
+    )
 # Load environment variables
 load_dotenv()
 
@@ -29,6 +51,7 @@ class TripRequest(BaseModel):
     budget: int
     travelers: int
     days: int
+    travelDate: str
     preferences: str
 
 
@@ -81,8 +104,6 @@ def transport_agent(source, destination, travelers, budget):
     )
 
     return response.choices[0].message.content
-
-
 @app.post("/generate-trip")
 def generate_trip(data: TripRequest):
 
@@ -93,11 +114,30 @@ def generate_trip(data: TripRequest):
         data.budget
     )
 
+    origin = AIRPORT_CODES.get(
+        data.source,
+        "CJB"
+    )
+
+    destination = AIRPORT_CODES.get(
+        data.destination,
+        "GOI"
+    )
+
+    flight_data = get_flights(
+    origin,
+    destination,
+    data.travelDate
+    )
+    recommended_flight = get_best_flight(
+    flight_data
+    )
     planner_prompt = f"""
     Create a detailed travel itinerary.
 
     Source: {data.source}
     Destination: {data.destination}
+    Travel Date: {data.travelDate}
     Budget: ₹{data.budget}
     Travelers: {data.travelers}
     Duration: {data.days} days
@@ -105,6 +145,12 @@ def generate_trip(data: TripRequest):
 
     Transport Analysis:
     {transport_options}
+
+    Available Real Flights:
+    {flight_data}
+
+    Recommended Flight:
+    {recommended_flight}
 
     Include:
 
@@ -172,7 +218,9 @@ def generate_trip(data: TripRequest):
     }
 
     return {
-        "transport_options": transport_options,
-        "trip_plan": response.choices[0].message.content,
-        "booking_links": booking_links
-    }
+    "transport_options": transport_options,
+    "flight_data": flight_data,
+    "recommended_flight": recommended_flight,
+    "trip_plan": response.choices[0].message.content,
+    "booking_links": booking_links
+}

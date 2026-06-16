@@ -4,17 +4,20 @@ import axios from "axios";
 function App() {
 
   const [form, setForm] = useState({
-    source: "",
-    destination: "",
-    budget: "",
-    travelers: "",
-    days: "",
-    preferences: "",
-  });
+  source: "",
+  destination: "",
+  budget: "",
+  travelers: "",
+  days: "",
+  travelDate: "",
+  preferences: "",
+});
 
   const [tripPlan, setTripPlan] = useState("");
   const [loading, setLoading] = useState(false);
   const [bookingLinks, setBookingLinks] = useState(null);
+  const [flights, setFlights] = useState([]);
+  const [recommendedFlight, setRecommendedFlight] = useState(null);
 
   const handleChange = (e) => {
     setForm({
@@ -24,27 +27,46 @@ function App() {
   };
 
   const generateTrip = async () => {
+    if (form.source === form.destination) {
+  alert("Source and Destination cannot be the same");
+  return;
+}
     try {
+      if (
+  !form.source ||
+  !form.destination ||
+  !form.travelDate
+) {
+  alert("Please fill source, destination and travel date");
+  return;
+}
 
       setLoading(true);
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/generate-trip",
-        {
-          source: form.source,
-          destination: form.destination,
-          budget: Number(form.budget),
-          travelers: Number(form.travelers),
-          days: Number(form.days),
-          preferences: form.preferences,
-        }
-      );
+  "http://127.0.0.1:8000/generate-trip",
+  {
+    source: form.source,
+    destination: form.destination,
+    budget: Number(form.budget),
+    travelers: Number(form.travelers),
+    days: Number(form.days),
+    travelDate: form.travelDate,
+    preferences: form.preferences,
+  }
+);
 
       setTripPlan(response.data.trip_plan);
 
       setBookingLinks(
         response.data.booking_links
       );
+      setFlights(
+  response.data.flight_data || []
+);
+setRecommendedFlight(
+  response.data.recommended_flight
+);
 
     } catch (error) {
 
@@ -57,7 +79,7 @@ function App() {
 
     }
   };
-
+console.log("Flights:", flights);
   return (
     <div
       style={{
@@ -70,19 +92,43 @@ function App() {
 
       <h1>✈️ AI Travel Planner</h1>
 
-      <input
-        name="source"
-        placeholder="Source City"
-        onChange={handleChange}
-        style={inputStyle}
-      />
+      <select
+  name="source"
+  onChange={handleChange}
+  style={inputStyle}
+>
+  <option value="">Select Source</option>
+  <option>Chennai</option>
+  <option>Delhi</option>
+  <option>Mumbai</option>
+  <option>Bangalore</option>
+  <option>Hyderabad</option>
+  <option>Coimbatore</option>
+  <option>Goa</option>
+  <option>Kochi</option>
+<option>Pune</option>
+<option>Kolkata</option>
+<option>Ahmedabad</option>
+</select>
 
-      <input
-        name="destination"
-        placeholder="Destination"
-        onChange={handleChange}
-        style={inputStyle}
-      />
+      <select
+  name="destination"
+  onChange={handleChange}
+  style={inputStyle}
+>
+  <option value="">Select Destination</option>
+  <option>Chennai</option>
+  <option>Delhi</option>
+  <option>Mumbai</option>
+  <option>Bangalore</option>
+  <option>Hyderabad</option>
+  <option>Coimbatore</option>
+  <option>Goa</option>
+  <option>Kochi</option>
+<option>Pune</option>
+<option>Kolkata</option>
+<option>Ahmedabad</option>
+</select>
 
       <input
         name="budget"
@@ -104,7 +150,12 @@ function App() {
         onChange={handleChange}
         style={inputStyle}
       />
-
+       <input
+  type="date"
+  name="travelDate"
+  onChange={handleChange}
+  style={inputStyle}
+/>
       <input
         name="preferences"
         placeholder="Beach, Adventure, Food..."
@@ -129,7 +180,151 @@ function App() {
           Generating itinerary...
         </h3>
       )}
+       {recommendedFlight && (
+        
+  <div
+    style={{
+      background: "#d4edda",
+      padding: "15px",
+      borderRadius: "10px",
+      marginTop: "20px"
+    }}
+  >
+    <h2>🏆 Recommended Flight</h2>
+<p><strong>Airline:</strong> {recommendedFlight.airline}</p>
 
+<p><strong>Price:</strong> ₹{recommendedFlight.price}</p>
+
+<p>
+  <strong>Duration:</strong>
+  {" "}
+  {Math.floor(recommendedFlight.duration / 60)}h
+  {" "}
+  {recommendedFlight.duration % 60}m
+</p>
+
+<p>
+  <strong>Platform:</strong>
+  {" "}
+  {recommendedFlight.gate}
+</p>
+
+<p>
+  <strong>Departure:</strong>
+  {" "}
+  {new Date(
+    recommendedFlight.departure
+  ).toLocaleString()}
+</p>
+
+<a
+  href={recommendedFlight.booking_url}
+  target="_blank"
+  rel="noreferrer"
+  style={{
+    background: "green",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    textDecoration: "none",
+    display: "inline-block",
+    marginTop: "10px"
+  }}
+>
+  Book Recommended Flight
+</a>
+    
+  </div>
+)}
+      {flights.length > 0 && (
+  <div
+    style={{
+      marginTop: "30px",
+      padding: "20px",
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      backgroundColor: "#eef7ff",
+    }}
+  >
+    <h2>✈ Real Flight Prices</h2>
+
+    <table
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+      }}
+    >
+      <thead>
+        <tr>
+  <th style={tableStyle}>Airline</th>
+  <th style={tableStyle}>Price</th>
+  <th style={tableStyle}>Duration</th>
+  <th style={tableStyle}>Departure</th>
+  <th style={tableStyle}>Platform</th>
+  <th style={tableStyle}>Book</th>
+</tr>
+      </thead>
+
+      <tbody>
+        {flights.map((flight, index) => (
+          <tr key={index}>
+            <td style={tableStyle}>
+              {flight.airline}
+            </td>
+
+            <td style={tableStyle}>
+              ₹{flight.price}
+            </td>
+
+            <td style={tableStyle}>
+              {Math.floor(flight.duration / 60)}h {flight.duration % 60}m
+            </td>
+
+            <td style={tableStyle}>
+              {new Date(
+  flight.departure
+).toLocaleString()}
+            </td>
+            <td style={tableStyle}>
+  {flight.gate}
+</td>
+            <td style={tableStyle}>
+  <a
+    href={flight.booking_url}
+    target="_blank"
+    rel="noreferrer"
+    style={{
+      background: "#007bff",
+      color: "white",
+      padding: "8px 12px",
+      borderRadius: "5px",
+      textDecoration: "none",
+      display: "inline-block"
+    }}
+  >
+    Book
+  </a>
+</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)
+}
+{!loading &&
+ flights.length === 0 &&
+ tripPlan && (
+  <div
+    style={{
+      color: "red",
+      marginTop: "20px"
+    }}
+  >
+    No flights found for the selected route/date.
+  </div>
+)}
+     
       {bookingLinks && (
         <div
           style={{
@@ -227,5 +422,9 @@ const inputStyle = {
   borderRadius: "5px",
   border: "1px solid #ccc",
 };
-
+const tableStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+  textAlign: "left",
+};
 export default App;

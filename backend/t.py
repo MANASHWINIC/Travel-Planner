@@ -1,19 +1,28 @@
-from groq import Groq
-from dotenv import load_dotenv
+import requests
 import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
-key = os.getenv("YOUR_GROQ_KEY")
-print("KEY FOUND:", key[:10] if key else "NONE")
+TOKEN = os.getenv("TRAVELPAYOUTS_TOKEN")
 
-client = Groq(api_key=key)
+headers = {
+    "X-Access-Token": TOKEN
+}
 
-response = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=[
-        {"role": "user", "content": "Hello"}
-    ]
+url = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
+
+params = {
+    "origin": "MAA",
+    "destination": "DEL",
+    "departure_at": "2026-07"
+}
+
+response = requests.get(
+    url,
+    headers=headers,
+    params=params
 )
 
-print(response.choices[0].message.content)
+print(response.status_code)
+print(response.text[:1000])
