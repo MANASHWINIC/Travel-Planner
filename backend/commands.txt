@@ -1,2 +1,11 @@
 uvicorn main:app --reload
 
+{
+  "source": "Mumbai",
+  "destination": "Delhi",
+  "budget": 15000,
+  "travelers": 1,
+  "days": 2,
+  "travelDate": "2026-06-25",
+  "preferences": "Budget"
+}
