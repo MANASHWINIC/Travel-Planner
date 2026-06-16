@@ -18,6 +18,8 @@ function App() {
   const [bookingLinks, setBookingLinks] = useState(null);
   const [flights, setFlights] = useState([]);
   const [recommendedFlight, setRecommendedFlight] = useState(null);
+  const [trains, setTrains] = useState([]);
+  const [recommendedTrain, setRecommendedTrain] = useState(null);
 
   const handleChange = (e) => {
     setForm({
@@ -67,6 +69,19 @@ function App() {
 setRecommendedFlight(
   response.data.recommended_flight
 );
+setTrains(
+  response.data.train_data || []
+);
+if (
+  response.data.train_data &&
+  response.data.train_data.length > 0
+) {
+  setRecommendedTrain(
+    response.data.train_data[0]
+  );
+} else {
+  setRecommendedTrain(null);
+}
 
     } catch (error) {
 
@@ -180,7 +195,7 @@ console.log("Flights:", flights);
           Generating itinerary...
         </h3>
       )}
-       {recommendedFlight && (
+       {recommendedFlight !== null && (
         
   <div
     style={{
@@ -234,6 +249,28 @@ console.log("Flights:", flights);
   Book Recommended Flight
 </a>
     
+  </div>
+)}
+{recommendedTrain && (
+  <div
+    style={{
+      background: "#fff3cd",
+      padding: "15px",
+      borderRadius: "10px",
+      marginTop: "20px"
+    }}
+  >
+    <h2>🚆 Recommended Train</h2>
+
+    <p><strong>Train:</strong> {recommendedTrain?.train_name}</p>
+
+<p><strong>Number:</strong> {recommendedTrain?.train_number}</p>
+
+<p><strong>Duration:</strong> {recommendedTrain?.duration}</p>
+
+<p><strong>Departure:</strong> {recommendedTrain?.from_std}</p>
+
+<p><strong>Arrival:</strong> {recommendedTrain?.to_std}</p>
   </div>
 )}
       {flights.length > 0 && (
@@ -324,7 +361,87 @@ console.log("Flights:", flights);
     No flights found for the selected route/date.
   </div>
 )}
-     
+     {trains.length > 0 && (
+  <div
+    style={{
+      marginTop: "30px",
+      padding: "20px",
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      backgroundColor: "#fff3cd",
+    }}
+  >
+    <h2>🚆 Available Trains</h2>
+
+    <table
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+      }}
+    >
+      <thead>
+        <tr>
+          <th style={tableStyle}>Train No</th>
+          <th style={tableStyle}>Train Name</th>
+          <th style={tableStyle}>Departure</th>
+          <th style={tableStyle}>Arrival</th>
+          <th style={tableStyle}>Duration</th>
+          <th style={tableStyle}>Type</th>
+          <th style={tableStyle}>Classes</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {Array.isArray(trains) &&
+ trains.map((train, index) => (
+          <tr key={index}>
+            <td style={tableStyle}>
+              {train.train_number}
+            </td>
+
+            <td style={tableStyle}>
+              {train.train_name}
+            </td>
+
+            <td style={tableStyle}>
+  {train.from_std}
+</td>
+
+<td style={tableStyle}>
+  {train.to_std}
+</td>
+
+            <td style={tableStyle}>
+              {train.duration}
+            </td>
+
+            <td style={tableStyle}>
+              {train.train_type}
+            </td>
+
+            <td style={tableStyle}>
+  {Array.isArray(train.class_type)
+    ? train.class_type.join(", ")
+    : ""}
+</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+{!loading &&
+ trains.length === 0 &&
+ tripPlan && (
+  <div
+    style={{
+      color: "orange",
+      marginTop: "20px"
+    }}
+  >
+    No trains found for selected route/date.
+  </div>
+)}
       {bookingLinks && (
         <div
           style={{

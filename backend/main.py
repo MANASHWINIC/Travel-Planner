@@ -5,6 +5,8 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 from flight_service import get_flights
+from train_service import get_trains
+from datetime import datetime
 AIRPORT_CODES = {
     "Coimbatore": "CJB",
     "Goa": "GOI",
@@ -17,6 +19,19 @@ AIRPORT_CODES = {
     "Pune": "PNQ",
     "Kolkata": "CCU",
     "Ahmedabad": "AMD"
+}
+STATION_CODES = {
+    "Chennai": "MAS",
+    "Delhi": "NDLS",
+    "Mumbai": "CSMT",
+    "Bangalore": "SBC",
+    "Hyderabad": "SC",
+    "Coimbatore": "CBE",
+    "Kochi": "ERS",
+    "Goa": "MAO",
+    "Pune": "PUNE",
+    "Kolkata": "HWH",
+    "Ahmedabad": "ADI"
 }
 def get_best_flight(flights):
 
@@ -129,6 +144,23 @@ def generate_trip(data: TripRequest):
     destination,
     data.travelDate
     )
+    journey_date = datetime.strptime(
+    data.travelDate,
+    "%Y-%m-%d"
+    ).strftime("%d-%m-%Y")
+    source_station = STATION_CODES.get(data.source)
+    destination_station = STATION_CODES.get(data.destination)
+
+    if not source_station or not destination_station:
+        train_data = []
+    else:
+        train_data = get_trains(
+            source_station,
+            destination_station,
+            journey_date
+        )
+    print("Flights found:", len(flight_data))
+    print("Trains found:", len(train_data))   
     recommended_flight = get_best_flight(
     flight_data
     )
@@ -148,6 +180,8 @@ def generate_trip(data: TripRequest):
 
     Available Real Flights:
     {flight_data}
+    Available Trains:
+    {train_data}
 
     Recommended Flight:
     {recommended_flight}
@@ -220,6 +254,7 @@ def generate_trip(data: TripRequest):
     return {
     "transport_options": transport_options,
     "flight_data": flight_data,
+    "train_data": train_data,
     "recommended_flight": recommended_flight,
     "trip_plan": response.choices[0].message.content,
     "booking_links": booking_links
