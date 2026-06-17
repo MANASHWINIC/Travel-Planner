@@ -9,3 +9,14 @@ uvicorn main:app --reload
   "travelDate": "2026-06-25",
   "preferences": "Budget"
 }
+
+
+{
+  "source": "Chennai",
+  "destination": "Goa",
+  "budget": 30000,
+  "travelers": 2,
+  "days": 3,
+  "travelDate": "2026-07-15",
+  "preferences": "Beach, Food, Nightlife"
+}

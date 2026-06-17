@@ -15,12 +15,12 @@ function App() {
 
   const [tripPlan, setTripPlan] = useState("");
   const [loading, setLoading] = useState(false);
-  const [bookingLinks, setBookingLinks] = useState(null);
   const [flights, setFlights] = useState([]);
   const [recommendedFlight, setRecommendedFlight] = useState(null);
   const [trains, setTrains] = useState([]);
   const [recommendedTrain, setRecommendedTrain] = useState(null);
-
+  const [hotels, setHotels] = useState([]);
+  const [recommendedHotel, setRecommendedHotel] = useState(null);
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -60,9 +60,6 @@ function App() {
 
       setTripPlan(response.data.trip_plan);
 
-      setBookingLinks(
-        response.data.booking_links
-      );
       setFlights(
   response.data.flight_data || []
 );
@@ -72,16 +69,16 @@ setRecommendedFlight(
 setTrains(
   response.data.train_data || []
 );
-if (
-  response.data.train_data &&
-  response.data.train_data.length > 0
-) {
-  setRecommendedTrain(
-    response.data.train_data[0]
-  );
-} else {
-  setRecommendedTrain(null);
-}
+setRecommendedTrain(
+  response.data.recommended_train
+) 
+setHotels(
+  response.data.hotel_data || []
+);
+setRecommendedHotel(
+  response.data.recommended_hotel
+);
+
 
     } catch (error) {
 
@@ -146,25 +143,29 @@ console.log("Flights:", flights);
 </select>
 
       <input
-        name="budget"
-        placeholder="Budget"
-        onChange={handleChange}
-        style={inputStyle}
-      />
+  type="number"
+  name="budget"
+  placeholder="Budget"
+  onChange={handleChange}
+  style={inputStyle}
+/>
 
-      <input
-        name="travelers"
-        placeholder="Travelers"
-        onChange={handleChange}
-        style={inputStyle}
-      />
+<input
+  type="number"
+  name="travelers"
+  placeholder="Travelers"
+  onChange={handleChange}
+  style={inputStyle}
+/>
 
-      <input
-        name="days"
-        placeholder="Days"
-        onChange={handleChange}
-        style={inputStyle}
-      />
+
+<input
+  type="number"
+  name="days"
+  placeholder="Days"
+  onChange={handleChange}
+  style={inputStyle}
+/>
        <input
   type="date"
   name="travelDate"
@@ -442,65 +443,103 @@ console.log("Flights:", flights);
     No trains found for selected route/date.
   </div>
 )}
-      {bookingLinks && (
-        <div
-          style={{
-            marginTop: "30px",
-            padding: "20px",
-            border: "1px solid #ddd",
-            borderRadius: "10px",
-            backgroundColor: "#f5f5f5",
-          }}
-        >
+{recommendedHotel && (
+  <div
+    style={{
+      background: "#d4edda",
+      padding: "15px",
+      borderRadius: "10px",
+      marginTop: "20px"
+    }}
+  >
+    <h2>🏨 Recommended Hotel</h2>
 
-          <h2>✈ Flight Booking Platforms</h2>
+    <p>
+      <strong>Name:</strong>
+      {" "}
+      {recommendedHotel.name}
+    </p>
 
-          {bookingLinks.flights.map((item) => (
-            <div key={item.name}>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {item.name}
-              </a>
-            </div>
-          ))}
+    <p>
+      <strong>Rating:</strong>
+      {" "}
+      {recommendedHotel.rating}
+    </p>
 
-          <br />
-
-          <h2>🏨 Hotel Booking Platforms</h2>
-
-          {bookingLinks.hotels.map((item) => (
-            <div key={item.name}>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {item.name}
-              </a>
-            </div>
-          ))}
-
-          <br />
-
-          <h2>🎟 Activities & Tours</h2>
-
-          {bookingLinks.activities.map((item) => (
-            <div key={item.name}>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {item.name}
-              </a>
-            </div>
-          ))}
-
-        </div>
+    <p>
+      <strong>Price:</strong>
+      {" "}
+      ₹{Math.round(
+        recommendedHotel.price
       )}
+    </p>
+
+    <p>
+      <strong>Address:</strong>
+      {" "}
+      {recommendedHotel.address}
+    </p>
+
+    <a
+      href={recommendedHotel.booking_url}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Book Hotel
+    </a>
+  </div>
+)}
+{hotels.length > 0 && (
+  <div
+    style={{
+      marginTop: "30px",
+      padding: "20px",
+      border: "1px solid #ddd",
+      borderRadius: "10px"
+    }}
+  >
+    <h2>🏨 Hotels</h2>
+
+    {hotels.map((hotel, index) => (
+      <div
+        key={index}
+        style={{
+          marginBottom: "20px",
+          padding: "15px",
+          border: "1px solid #ccc",
+          borderRadius: "8px"
+        }}
+      >
+        <h3>{hotel.name}</h3>
+
+        <p>⭐ Rating: {hotel.rating}</p>
+
+        <p>📍 {hotel.address}</p>
+
+        <p>💰 ₹{Math.round(hotel.price)}</p>
+
+        <a
+          href={hotel.booking_url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Booking.com
+        </a>
+
+        {" | "}
+
+        <a
+          href={hotel.agoda_url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Agoda
+        </a>
+      </div>
+    ))}
+  </div>
+)}
+
 
       {tripPlan && (
         <div

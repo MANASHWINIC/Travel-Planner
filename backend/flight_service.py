@@ -65,10 +65,10 @@ def get_flights(origin, destination, travel_date):
                     item.get("link", "")
             })
     print("Flights found:", len(flights))
-    print(flights)
+    # print(flights)
     print("Origin:", origin)
     print("Destination:", destination)
     print("Date:", travel_date)
-    print("Raw API Response:", data)
+    #print("Raw API Response:", data)
 
     return flights

@@ -4,9 +4,7 @@ from pydantic import BaseModel
 from groq import Groq
 from dotenv import load_dotenv
 import os
-from flight_service import get_flights
-from train_service import get_trains
-from datetime import datetime
+from travel_graph import graph
 AIRPORT_CODES = {
     "Coimbatore": "CJB",
     "Goa": "GOI",
@@ -40,6 +38,37 @@ def get_best_flight(flights):
 
     return min(
         flights,
+        key=lambda x: x["price"]
+    )
+def get_best_train(trains):
+
+    if not trains:
+        return None
+
+    return min(
+        trains,
+        key=lambda x: int(
+            x["duration"].split(":")[0]
+        )
+    )
+
+
+def get_best_hotel(hotels):
+
+    if not hotels:
+        return None
+
+    hotels_with_price = [
+        hotel
+        for hotel in hotels
+        if hotel.get("price")
+    ]
+
+    if not hotels_with_price:
+        return None
+
+    return min(
+        hotels_with_price,
         key=lambda x: x["price"]
     )
 # Load environment variables
@@ -122,140 +151,32 @@ def transport_agent(source, destination, travelers, budget):
 @app.post("/generate-trip")
 def generate_trip(data: TripRequest):
 
-    transport_options = transport_agent(
-        data.source,
-        data.destination,
-        data.travelers,
-        data.budget
-    )
-
-    origin = AIRPORT_CODES.get(
-        data.source,
-        "CJB"
-    )
-
-    destination = AIRPORT_CODES.get(
-        data.destination,
-        "GOI"
-    )
-
-    flight_data = get_flights(
-    origin,
-    destination,
-    data.travelDate
-    )
-    journey_date = datetime.strptime(
-    data.travelDate,
-    "%Y-%m-%d"
-    ).strftime("%d-%m-%Y")
-    source_station = STATION_CODES.get(data.source)
-    destination_station = STATION_CODES.get(data.destination)
-
-    if not source_station or not destination_station:
-        train_data = []
-    else:
-        train_data = get_trains(
-            source_station,
-            destination_station,
-            journey_date
-        )
-    print("Flights found:", len(flight_data))
-    print("Trains found:", len(train_data))   
-    recommended_flight = get_best_flight(
-    flight_data
-    )
-    planner_prompt = f"""
-    Create a detailed travel itinerary.
-
-    Source: {data.source}
-    Destination: {data.destination}
-    Travel Date: {data.travelDate}
-    Budget: ₹{data.budget}
-    Travelers: {data.travelers}
-    Duration: {data.days} days
-    Preferences: {data.preferences}
-
-    Transport Analysis:
-    {transport_options}
-
-    Available Real Flights:
-    {flight_data}
-    Available Trains:
-    {train_data}
-
-    Recommended Flight:
-    {recommended_flight}
-
-    Include:
-
-    1. Travel Summary
-    2. Recommended Transport
-    3. Day-wise Itinerary
-    4. Budget Breakdown
-    5. Attractions
-    6. Travel Tips
-    """
-
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "user",
-                "content": planner_prompt
-            }
-        ]
-    )
-
-    booking_links = {
-        "flights": [
-            {
-                "name": "MakeMyTrip",
-                "url": "https://www.makemytrip.com/flights/"
-            },
-            {
-                "name": "Goibibo Flights",
-                "url": "https://www.goibibo.com/flights/"
-            },
-            {
-                "name": "IndiGo",
-                "url": "https://www.goindigo.in"
-            },
-            {
-                "name": "Air India",
-                "url": "https://www.airindia.com"
-            }
-        ],
-        "hotels": [
-            {
-                "name": "Booking.com",
-                "url": "https://www.booking.com"
-            },
-            {
-                "name": "Agoda",
-                "url": "https://www.agoda.com"
-            },
-            {
-                "name": "Goibibo Hotels",
-                "url": "https://www.goibibo.com/hotels/"
-            }
-        ],
-        "activities": [
-            {
-                "name": "Viator",
-                "url": "https://www.viator.com"
-            },
-            {
-                "name": "GetYourGuide",
-                "url": "https://www.getyourguide.com"
-            }
-        ]
-    }
+    result = graph.invoke({
+        "source": data.source,
+        "destination": data.destination,
+        "budget": data.budget,
+        "travelers": data.travelers,
+        "days": data.days,
+        "travelDate": data.travelDate,
+        "preferences": data.preferences
+    })
 
     return {
-    "transport_options": transport_options,
-    "flight_data": flight_data,
-    "train_data": train_data,
-    "recommended_flight": recommended_flight,
-    "trip_plan": response.choices[0].message.content,
-    "booking_links": booking_links
+    "flight_data": result["flights"],
+
+    "recommended_flight":
+        get_best_flight(result["flights"]),
+
+    "train_data": result["trains"],
+
+    "recommended_train":
+        get_best_train(result["trains"]),
+
+    "hotel_data": result["hotels"],
+
+    "recommended_hotel":
+        get_best_hotel(result["hotels"]),
+
+    "trip_plan":
+        result["trip_plan"]
 }

@@ -38,8 +38,8 @@ def get_trains(
 
         data = response.json()
 
-        print("Train API Response:")
-        print(data)
+        # print("Train API Response:")
+        #print(data)
 
     except Exception as e:
 
@@ -66,7 +66,7 @@ def get_trains(
     print("From:", from_station)
     print("To:", to_station)
     print("Date:", journey_date)
-    print("Train API Response:")
-    print(data)
+    #print("Train API Response:")
+    #print(data)
 
     return trains
