@@ -200,7 +200,7 @@ console.log("Flights:", flights);
         
   <div
     style={{
-      background: "#d4edda",
+      background: "#070707",
       padding: "15px",
       borderRadius: "10px",
       marginTop: "20px"
@@ -255,7 +255,7 @@ console.log("Flights:", flights);
 {recommendedTrain && (
   <div
     style={{
-      background: "#fff3cd",
+      background: "#000000",
       padding: "15px",
       borderRadius: "10px",
       marginTop: "20px"
@@ -281,7 +281,7 @@ console.log("Flights:", flights);
       padding: "20px",
       border: "1px solid #ddd",
       borderRadius: "10px",
-      backgroundColor: "#eef7ff",
+      backgroundColor: "#000000",
     }}
   >
     <h2>✈ Real Flight Prices</h2>
@@ -369,7 +369,7 @@ console.log("Flights:", flights);
       padding: "20px",
       border: "1px solid #ddd",
       borderRadius: "10px",
-      backgroundColor: "#fff3cd",
+      backgroundColor: "#000000",
     }}
   >
     <h2>🚆 Available Trains</h2>
@@ -446,7 +446,7 @@ console.log("Flights:", flights);
 {recommendedHotel && (
   <div
     style={{
-      background: "#d4edda",
+      background: "#0c0c0c",
       padding: "15px",
       borderRadius: "10px",
       marginTop: "20px"
@@ -494,7 +494,7 @@ console.log("Flights:", flights);
     style={{
       marginTop: "30px",
       padding: "20px",
-      border: "1px solid #ddd",
+      border: "1px solid #ffffff",
       borderRadius: "10px"
     }}
   >
@@ -548,7 +548,7 @@ console.log("Flights:", flights);
             padding: "20px",
             border: "1px solid #ddd",
             borderRadius: "10px",
-            backgroundColor: "#f9f9f9",
+            backgroundColor: "#000000",
           }}
         >
 
