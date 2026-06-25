@@ -6,3 +6,4 @@ credentials.json
 token.json
 .env
 Trip_Itinerary.pdf
+credentials_backup.json
