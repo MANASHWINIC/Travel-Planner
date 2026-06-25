@@ -1,5 +1,7 @@
 uvicorn main:app --reload
 
+
+ngrok http 8000
 {
   "source": "Mumbai",
   "destination": "Delhi",

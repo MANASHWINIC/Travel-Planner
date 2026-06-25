@@ -7,7 +7,15 @@ from datetime import datetime, timedelta
 from groq import Groq
 from dotenv import load_dotenv
 import os
+
+# ------------------------------
+# Session Storage
+# ------------------------------
+
+
 load_dotenv()
+
+
 
 client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
@@ -43,6 +51,7 @@ STATION_CODES = {
 
 class TravelState(TypedDict):
 
+    # User Input
     source: str
     destination: str
     budget: int
@@ -51,11 +60,22 @@ class TravelState(TypedDict):
     travelDate: str
     preferences: str
 
+    # API Results
     flights: list
     trains: list
     hotels: list
 
+    # Agent Results
     trip_plan: str
+
+    # Approval
+    approved: bool
+    feedback: str
+
+    # Execution
+    pdf_path: str
+    calendar_status: str
+    whatsapp_status: str
 
     
 
@@ -148,95 +168,89 @@ def hotel_agent(state):
 
     return state
 # --------------------
-# Budget Agent
-# --------------------
-
-def budget_agent(state):
-
-    cheapest_flight = 0
-
-    if state["flights"]:
-
-        cheapest_flight = min(
-            state["flights"],
-            key=lambda x: x["price"]
-        )["price"]
-
-    hotel_budget = (
-        state["budget"]
-        - cheapest_flight * state["travelers"]
-    )
-
-    filtered_hotels = []
-
-    for hotel in state["hotels"]:
-
-        if (
-            hotel.get("price")
-            and hotel["price"] <= hotel_budget
-        ):
-            filtered_hotels.append(hotel)
-
-    state["hotels"] = filtered_hotels
-
-    print(
-        f"Budget Agent: {len(filtered_hotels)} hotels within budget"
-    )
-
-    return state
-
-
-    filtered_hotels = []
-
-    for hotel in state["hotels"]:
-
-        price = hotel.get("price")
-
-        if price and price <= state["budget"]:
-            filtered_hotels.append(hotel)
-
-    state["hotels"] = filtered_hotels
-
-    print(
-        f"Budget Agent: {len(filtered_hotels)} hotels within budget"
-    )
-
-    return state
-# --------------------
 # Planner Agent
 # --------------------
 
 def planner_agent(state):
 
     prompt = f"""
-    Create a detailed travel itinerary.
+You are an autonomous AI Travel Planning Agent.
 
-    Source: {state['source']}
-    Destination: {state['destination']}
-    Budget: ₹{state['budget']}
-    Travelers: {state['travelers']}
-    Duration: {state['days']} days
-    Preferences: {state['preferences']}
+Your responsibilities are:
 
-    Available Flights:
-    {state['flights']}
+1. Compare all available flights.
+2. Compare all available trains.
+3. Compare all available hotels.
+4. Consider:
 
-    Available Trains:
-    {state['trains']}
+- Budget
+- Travel duration
+- Comfort
+- Number of stops
+- Hotel ratings
+- Hotel price
+- User preferences
 
-    Available Hotels:
-    {state['hotels']}
+Do NOT always choose the cheapest option.
 
-    Include:
+Reason carefully and choose the BEST overall travel plan.
 
-    1. Travel Summary
-    2. Recommended Transport
-    3. Recommended Hotel
-    4. Day-wise Itinerary
-    5. Budget Breakdown
-    6. Attractions
-    7. Travel Tips
-    """
+Explain WHY you selected the transport and hotel.
+
+User Details
+
+Source:
+{state["source"]}
+
+Destination:
+{state["destination"]}
+
+Budget:
+₹{state["budget"]}
+
+Travelers:
+{state["travelers"]}
+
+Days:
+{state["days"]}
+
+Preferences:
+{state["preferences"]}
+
+Flights
+
+{state["flights"]}
+
+Trains
+
+{state["trains"]}
+
+Hotels
+
+{state["hotels"]}
+
+Generate:
+
+1. Travel Summary
+
+2. Recommended Transport
+(Explain why.)
+
+3. Recommended Hotel
+(Explain why.)
+
+4. Complete Day-wise Itinerary
+
+5. Budget Breakdown
+
+6. Attractions
+
+7. Food Recommendations
+
+8. Travel Tips
+
+Think step-by-step before making your recommendation.
+"""
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -256,7 +270,238 @@ def planner_agent(state):
     print("Planner Agent Completed")
 
     return state
+def replanning_agent(state):
 
+    print("========== REPLANNING AGENT ==========")
+
+    prompt = f"""
+You are an intelligent travel replanning agent.
+
+The user was NOT satisfied with the current itinerary.
+
+Current itinerary:
+
+{state["trip_plan"]}
+
+User feedback:
+
+{state["feedback"]}
+
+Modify ONLY the parts related to the feedback.
+
+Examples:
+
+- If user asks for cheaper hotel:
+    Change hotel only.
+
+- If user wants morning flight:
+    Change flight only.
+
+- If user wants more sightseeing:
+    Add attractions only.
+
+Keep everything else unchanged.
+
+Return the updated itinerary.
+"""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    state["trip_plan"] = response.choices[0].message.content
+
+    print("Replanning Agent Completed")
+
+    return state
+def execution_agent(state):
+
+    print("========== EXECUTION AGENT ==========")
+    state = pdf_agent(state)
+
+    state = calendar_agent(state)
+
+    state = whatsapp_agent(state)
+
+    print("Execution Agent Completed")
+
+    return state
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer
+)
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.colors import darkblue
+from reportlab.lib.units import inch
+from reportlab.lib.styles import ParagraphStyle
+
+
+def pdf_agent(state):
+
+    filename = "Trip_Itinerary.pdf"
+
+    doc = SimpleDocTemplate(filename)
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+    "Title",
+    parent=styles["Heading1"],
+    alignment=TA_CENTER,
+    textColor=darkblue,
+    spaceAfter=10,
+    spaceBefore=0
+    )
+
+    heading_style = ParagraphStyle(
+        "Heading",
+        parent=styles["Heading2"],
+        spaceBefore=6,
+        spaceAfter=4
+    )
+
+    normal_style = ParagraphStyle(
+        "Normal",
+        parent=styles["BodyText"],
+        leading=16,
+        spaceBefore=0,
+        spaceAfter=2
+    )
+
+    story = []
+
+    # Title
+    story.append(
+        Paragraph(
+            "AI Travel Planner",
+            title_style
+        )
+    )
+
+    story.append(
+        Spacer(1, 3)
+    )
+
+    # Trip Summary
+    story.append(
+        Paragraph(
+            "<b>Trip Summary</b>",
+            heading_style
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"""
+            <b>Source:</b> {state["source"]}<br/>
+            <b>Destination:</b> {state["destination"]}<br/>
+            <b>Travel Date:</b> {state["travelDate"]}<br/>
+            <b>Duration:</b> {state["days"]} Days<br/>
+            <b>Budget:</b> ₹{state["budget"]}<br/>
+            <b>Travellers:</b> {state["travelers"]}<br/>
+            """,
+            normal_style
+        )
+    )
+
+    story.append(
+        Spacer(1, 3)
+    )
+
+    # Itinerary
+    story.append(
+        Paragraph(
+            "<b>Travel Itinerary</b>",
+            heading_style
+        )
+    )
+
+    itinerary = state["trip_plan"]
+
+    # Preserve line breaks
+    for line in itinerary.split("\n"):
+
+        line = line.strip()
+
+        if line == "":
+            if line == "":
+                story.append(Spacer(1, 2))
+        else:
+            story.append(
+                Paragraph(
+                    line.replace(
+                        "&", "&amp;"
+                    ),
+                    normal_style
+                )
+            )
+
+    doc.build(story)
+
+    state["pdf_path"] = filename
+
+    print("PDF Generated Successfully")
+
+    return state
+from calendar_service import add_trip_to_calendar
+
+def calendar_agent(state):
+
+    success = add_trip_to_calendar(
+        state["source"],
+
+        state["destination"],
+
+        state["travelDate"],
+
+        state["days"],
+
+        state["trip_plan"]
+
+    )
+
+    if success:
+
+        state["calendar_status"] = (
+            "Added Successfully"
+        )
+
+    else:
+
+        state["calendar_status"] = (
+            "Failed"
+        )
+
+    return state
+from whatsapp_service import send_whatsapp_message
+
+def whatsapp_agent(state):
+
+    print("WhatsApp Agent Started")
+
+    sid = send_whatsapp_message(
+
+        state["destination"],
+
+        state["trip_plan"]
+
+    )
+
+    state["whatsapp_status"] = "Message Sent"
+
+    state["message_sid"] = sid
+
+    print("WhatsApp Agent Completed")
+
+    return state
 # --------------------
 # Build Graph
 # --------------------
@@ -283,10 +528,6 @@ workflow.add_node(
     "planner_agent",
     planner_agent
 )
-workflow.add_node(
-    "budget_agent",
-    budget_agent
-)
 
 workflow.set_entry_point(
     "flight_agent"
@@ -304,11 +545,6 @@ workflow.add_edge(
 
 workflow.add_edge(
     "hotel_agent",
-    "budget_agent"
-)
-
-workflow.add_edge(
-    "budget_agent",
     "planner_agent"
 )
 

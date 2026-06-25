@@ -21,6 +21,15 @@ function App() {
   const [recommendedTrain, setRecommendedTrain] = useState(null);
   const [hotels, setHotels] = useState([]);
   const [recommendedHotel, setRecommendedHotel] = useState(null);
+  const [tripData, setTripData] = useState(null);
+
+const [feedback, setFeedback] = useState("");
+
+const [showFeedback, setShowFeedback] = useState(false);
+
+const [executionResult, setExecutionResult] = useState(null);
+
+const [approved, setApproved] = useState(false);
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -59,6 +68,7 @@ function App() {
 );
 
       setTripPlan(response.data.trip_plan);
+      setTripData(response.data.trip_data);
 
       setFlights(
   response.data.flight_data || []
@@ -91,7 +101,82 @@ setRecommendedHotel(
 
     }
   };
+
 console.log("Flights:", flights);
+const approveTrip = async () => {
+
+  try {
+
+    const response = await axios.post(
+
+      "http://127.0.0.1:8000/approve-trip",
+
+      {
+
+        trip_data: tripData
+
+      }
+
+    );
+
+    setExecutionResult(response.data);
+
+    setApproved(true);
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    alert("Execution Failed");
+
+  }
+
+}
+const replanTrip = async () => {
+
+  try{
+
+    const response = await axios.post(
+
+      "http://127.0.0.1:8000/replan-trip",
+
+      {
+
+        trip_data: tripData,
+
+        feedback: feedback
+
+      }
+
+    );
+
+    setTripPlan(
+
+      response.data.trip_plan
+
+    );
+
+    setTripData(
+
+      response.data.trip_data
+
+    );
+
+    setShowFeedback(false);
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    alert("Replanning Failed");
+
+  }
+
+}
   return (
     <div
       style={{
@@ -565,6 +650,173 @@ console.log("Flights:", flights);
 
         </div>
       )}
+      {tripPlan && !approved && (
+
+<div
+style={{
+marginTop:20
+}}
+>
+
+<button
+
+onClick={approveTrip}
+
+style={{
+
+padding:"12px",
+
+background:"green",
+
+color:"white",
+
+marginRight:"20px",
+
+cursor:"pointer"
+
+}}
+
+>
+
+Approve Trip
+
+</button>
+
+<button
+
+onClick={()=>setShowFeedback(true)}
+
+style={{
+
+padding:"12px",
+
+background:"orange",
+
+color:"white",
+
+cursor:"pointer"
+
+}}
+
+>
+
+Replan Trip
+
+</button>
+
+</div>
+
+)}
+{showFeedback && (
+
+<div
+style={{
+marginTop:20
+}}
+>
+
+<textarea
+
+rows={5}
+
+style={{
+width:"100%"
+}}
+
+placeholder="Tell the AI what should change"
+
+value={feedback}
+
+onChange={(e)=>
+
+setFeedback(e.target.value)
+
+}
+
+/>
+
+<button
+
+onClick={replanTrip}
+
+style={{
+
+marginTop:10,
+
+padding:10
+
+}}
+
+>
+
+Submit Feedback
+
+</button>
+
+</div>
+
+)}
+{executionResult && (
+
+<div
+
+style={{
+
+marginTop:30,
+
+padding:20,
+
+border:"1px solid green",
+
+borderRadius:10
+
+}}
+
+>
+
+<h2>
+
+Execution Agent Completed
+
+</h2>
+
+<p>
+
+📅 Calendar
+
+{executionResult.calendar_status}
+
+</p>
+
+<p>
+
+📱 WhatsApp
+
+{executionResult.whatsapp_status}
+
+</p>
+
+<p>
+
+📄 PDF Generated
+
+</p>
+
+<a
+
+href="http://127.0.0.1:8000/download-pdf"
+
+target="_blank"
+
+>
+
+Download PDF
+
+</a>
+
+</div>
+
+)}
 
     </div>
   );
