@@ -323,11 +323,22 @@ Return the updated itinerary.
 def execution_agent(state):
 
     print("========== EXECUTION AGENT ==========")
+
     state = pdf_agent(state)
 
-    state = calendar_agent(state)
+    try:
+        state = calendar_agent(state)
+        state["calendar_status"] = "Added successfully"
+    except Exception as e:
+        print("Calendar Error:", e)
+        state["calendar_status"] = f"Skipped: {e}"
 
-    state = whatsapp_agent(state)
+    try:
+        state = whatsapp_agent(state)
+        state["whatsapp_status"] = "Sent successfully"
+    except Exception as e:
+        print("WhatsApp Error:", e)
+        state["whatsapp_status"] = f"Failed: {e}"
 
     print("Execution Agent Completed")
 
