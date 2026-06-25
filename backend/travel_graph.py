@@ -74,7 +74,6 @@ class TravelState(TypedDict):
 
     # Execution
     pdf_path: str
-    calendar_status: str
     whatsapp_status: str
 
     
@@ -325,14 +324,6 @@ def execution_agent(state):
     print("========== EXECUTION AGENT ==========")
 
     state = pdf_agent(state)
-
-    try:
-        state = calendar_agent(state)
-        state["calendar_status"] = "Added successfully"
-    except Exception as e:
-        print("Calendar Error:", e)
-        state["calendar_status"] = f"Skipped: {e}"
-
     try:
         state = whatsapp_agent(state)
         state["whatsapp_status"] = "Sent successfully"
@@ -460,36 +451,6 @@ def pdf_agent(state):
     state["pdf_path"] = filename
 
     print("PDF Generated Successfully")
-
-    return state
-from calendar_service import add_trip_to_calendar
-
-def calendar_agent(state):
-
-    success = add_trip_to_calendar(
-        state["source"],
-
-        state["destination"],
-
-        state["travelDate"],
-
-        state["days"],
-
-        state["trip_plan"]
-
-    )
-
-    if success:
-
-        state["calendar_status"] = (
-            "Added Successfully"
-        )
-
-    else:
-
-        state["calendar_status"] = (
-            "Failed"
-        )
 
     return state
 from whatsapp_service import send_whatsapp_message

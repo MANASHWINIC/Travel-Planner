@@ -118,7 +118,6 @@ def approve_trip(request: ApprovalRequest):
 
         "pdf_path": state.get("pdf_path"),
 
-        "calendar_status": state.get("calendar_status"),
 
         "whatsapp_status": state.get("whatsapp_status")
     }
