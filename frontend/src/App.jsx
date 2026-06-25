@@ -782,14 +782,6 @@ Execution Agent Completed
 
 <p>
 
-📅 Calendar
-
-{executionResult.calendar_status}
-
-</p>
-
-<p>
-
 📱 WhatsApp
 
 {executionResult.whatsapp_status}
