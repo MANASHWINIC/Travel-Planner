@@ -494,21 +494,22 @@ def calendar_agent(state):
     return state
 from whatsapp_service import send_whatsapp_message
 
+
 def whatsapp_agent(state):
 
-    print("WhatsApp Agent Started")
+    print("========== WHATSAPP AGENT ==========")
 
-    sid = send_whatsapp_message(
+    try:
 
-        state["destination"],
+        send_whatsapp_message(state)
 
-        state["trip_plan"]
+        state["whatsapp_status"] = "Sent Successfully"
 
-    )
+    except Exception as e:
 
-    state["whatsapp_status"] = "Message Sent"
+        print("WhatsApp Error:", e)
 
-    state["message_sid"] = sid
+        state["whatsapp_status"] = str(e)
 
     print("WhatsApp Agent Completed")
 

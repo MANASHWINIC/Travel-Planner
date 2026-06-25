@@ -9,7 +9,32 @@ client = Client(
     os.getenv("TWILIO_AUTH_TOKEN")
 )
 
-def send_whatsapp_message(destination, trip_plan):
+def send_whatsapp_message(state):
+
+    # Flight
+    flight = "Not Available"
+    if state.get("flights"):
+        cheapest = min(state["flights"], key=lambda x: x["price"])
+        flight = (
+            f"{cheapest.get('airline', 'Flight')} - "
+            f"₹{cheapest.get('price', 'N/A')}"
+        )
+
+    # Hotel
+    hotel = "Not Available"
+    if state.get("hotels"):
+        cheapest_hotel = min(
+            state["hotels"],
+            key=lambda x: x.get("price", 999999)
+        )
+
+        hotel = (
+            f"{cheapest_hotel.get('name', 'Hotel')} - "
+            f"₹{cheapest_hotel.get('price', 'N/A')}/night"
+        )
+
+    # Itinerary Summary
+    summary = state["trip_plan"][:700]
 
     message = client.messages.create(
 
@@ -18,18 +43,40 @@ def send_whatsapp_message(destination, trip_plan):
         to=os.getenv("USER_WHATSAPP"),
 
         body=f"""
-✈️ AI Travel Planner
+✈️ *AI Travel Planner*
 
-Destination: {destination}
+📍 Destination: {state['destination']}
 
-Your trip itinerary has been generated successfully.
+📅 Travel Date: {state['travelDate']}
 
-The PDF itinerary is attached.
-""",
+🧳 Duration: {state['days']} Days
 
-        media_url=[
-    "https://travel-planner-6v9c.onrender.com/download-pdf"
-]
+👤 Travelers: {state['travelers']}
+
+💰 Budget: ₹{state['budget']}
+
+----------------------------
+
+✈️ Recommended Flight
+
+{flight}
+
+----------------------------
+
+🏨 Recommended Hotel
+
+{hotel}
+
+----------------------------
+
+🗺️ Trip Highlights
+
+{summary}
+
+----------------------------
+
+Thank you for using AI Travel Planner ❤️
+"""
     )
 
     print("Message SID:", message.sid)
