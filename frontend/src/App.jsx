@@ -55,7 +55,7 @@ const [approved, setApproved] = useState(false);
       setLoading(true);
 
       const response = await axios.post(
-  "http://127.0.0.1:8000/generate-trip",
+  `${import.meta.env.VITE_API_URL}/generate-trip`,
   {
     source: form.source,
     destination: form.destination,
@@ -109,7 +109,7 @@ const approveTrip = async () => {
 
     const response = await axios.post(
 
-      "http://127.0.0.1:8000/approve-trip",
+      `${import.meta.env.VITE_API_URL}/approve-trip`,
 
       {
 
@@ -140,7 +140,7 @@ const replanTrip = async () => {
 
     const response = await axios.post(
 
-      "http://127.0.0.1:8000/replan-trip",
+      `${import.meta.env.VITE_API_URL}/replan-trip`,
 
       {
 
@@ -804,7 +804,7 @@ Execution Agent Completed
 
 <a
 
-href="http://127.0.0.1:8000/download-pdf"
+href={`${import.meta.env.VITE_API_URL}/download-pdf`}
 
 target="_blank"
 
