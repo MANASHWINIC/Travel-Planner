@@ -28,8 +28,8 @@ The PDF itinerary is attached.
 """,
 
         media_url=[
-            "https://helpless-error-duckling.ngrok-free.dev/download-pdf"
-        ]
+    "https://travel-planner-6v9c.onrender.com/download-pdf"
+]
     )
 
     print("Message SID:", message.sid)
